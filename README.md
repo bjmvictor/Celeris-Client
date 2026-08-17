@@ -177,12 +177,164 @@ O `.ico` deve preferencialmente conter resoluções de 16 a 256 pixels.
 
 ## Testes
 
+Antes de gerar uma versão distribuível, execute os testes automatizados:
+
 ```powershell
 dotnet test Celeris.Client.slnx
-dotnet build Celeris.Client.slnx --configuration Release
 ```
 
 Os testes atuais cobrem política de navegação, isolamento lógico das sessões e compartilhamento de sessão entre guias.
+
+## Compilação e publicação
+
+### Compilação Release
+
+Restaure as dependências e compile a solução em modo Release:
+
+```powershell
+dotnet restore Celeris.Client.slnx
+dotnet build Celeris.Client.slnx --configuration Release
+```
+
+Os arquivos compilados serão gerados em:
+
+```text
+src\Celeris.Client\bin\Release\net10.0-windows\
+```
+
+O executável não pode estar aberto durante a compilação. Caso o build informe que `Celeris.Client.exe` está sendo usado por outro processo, feche todas as janelas do Client ou encerre o processo antes de tentar novamente:
+
+```powershell
+Get-Process Celeris.Client -ErrorAction SilentlyContinue | Stop-Process
+```
+
+### Publicação dependente do .NET
+
+Gera uma pasta menor para computadores que já possuem o .NET Desktop Runtime 10 instalado:
+
+```powershell
+dotnet publish src\Celeris.Client\Celeris.Client.csproj `
+  --configuration Release `
+  --runtime win-x64 `
+  --self-contained false `
+  --output publish
+```
+
+### Publicação independente do .NET
+
+Inclui o runtime do .NET e gera um pacote maior, sem exigir uma instalação separada do .NET Desktop Runtime:
+
+```powershell
+dotnet publish src\Celeris.Client\Celeris.Client.csproj `
+  --configuration Release `
+  --runtime win-x64 `
+  --self-contained true `
+  -p:PublishSingleFile=true `
+  --output publish
+```
+
+Nos dois casos, o resultado será gravado em `publish\`. O Microsoft WebView2 Evergreen Runtime continua sendo necessário no computador de destino.
+
+Para evitar arquivos antigos de uma publicação anterior, remova ou renomeie a pasta `publish\` antes de gerar uma nova versão.
+
+### Publicação em arquivo único
+
+Para incorporar também as bibliotecas nativas do .NET no executável:
+
+```powershell
+dotnet publish src\Celeris.Client\Celeris.Client.csproj `
+  --configuration Release `
+  --runtime win-x64 `
+  --self-contained true `
+  -p:PublishSingleFile=true `
+  -p:IncludeNativeLibrariesForSelfExtract=true `
+  -p:DebugType=None `
+  -p:DebugSymbols=false `
+  --output publish-single
+```
+
+Os arquivos `appsettings.json`, `favorites.json` e `Assets\logo.png` permanecem externos para que endereço, produtos e identidade visual possam ser alterados sem recompilar o Client.
+
+## Criação do instalador
+
+O projeto inclui o script `installer\Celeris.Client.iss` para gerar um instalador Windows com o [Inno Setup](https://jrsoftware.org/isinfo.php).
+
+O instalador:
+
+- instala o Client em `Program Files\Celeris Client`;
+- cria um atalho no menu Iniciar;
+- oferece um atalho opcional na área de trabalho;
+- registra o ícone e o desinstalador no Windows;
+- solicita o fechamento do Client quando necessário durante uma atualização;
+- inclui os arquivos configuráveis da pasta de publicação.
+
+### 1. Instalar o Inno Setup
+
+Instale pelo Windows Package Manager:
+
+```powershell
+winget install --id JRSoftware.InnoSetup --exact
+```
+
+Feche e reabra o terminal após a instalação para atualizar o `PATH`.
+
+### 2. Gerar os arquivos para o instalador
+
+Na raiz do repositório, gere uma publicação independente do .NET:
+
+```powershell
+dotnet publish src\Celeris.Client\Celeris.Client.csproj `
+  --configuration Release `
+  --runtime win-x64 `
+  --self-contained true `
+  -p:PublishSingleFile=true `
+  -p:IncludeNativeLibrariesForSelfExtract=true `
+  -p:DebugType=None `
+  -p:DebugSymbols=false `
+  --output publish
+```
+
+### 3. Compilar o instalador
+
+Localize o compilador do Inno Setup. O `winget` pode instalá-lo para o usuário atual ou para todos os usuários:
+
+```powershell
+$isccCandidates = @(
+  "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe",
+  "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
+  "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+)
+
+$iscc = $isccCandidates |
+  Where-Object { Test-Path -LiteralPath $_ } |
+  Select-Object -First 1
+
+if (-not $iscc) {
+  throw "ISCC.exe não encontrado. Reinstale o Inno Setup ou verifique o local da instalação."
+}
+
+& $iscc installer\Celeris.Client.iss
+```
+
+Na instalação padrão por usuário, o caminho normalmente será:
+
+```text
+%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe
+```
+
+O instalador será gerado em:
+
+```text
+artifacts\Celeris-Client-Setup-0.1.0.exe
+```
+
+Para alterar a versão e o nome do arquivo, edite `MyAppVersion` no início de `installer\Celeris.Client.iss` antes da compilação.
+
+### Requisito do WebView2
+
+O instalador do Client não incorpora atualmente o Microsoft WebView2 Evergreen Runtime. Em computadores sem o runtime, instale-o antes de executar o Client. O runtime pode ser obtido na [página oficial do Microsoft WebView2](https://developer.microsoft.com/microsoft-edge/webview2/).
+
+Para implantação em rede hospitalar ou ambiente sem acesso à internet, utilize o instalador Evergreen Standalone e distribua-o pelo mecanismo corporativo de software da instituição.
 
 ## Status do projeto
 

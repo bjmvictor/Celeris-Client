@@ -17,9 +17,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
-    <None Update="favorites.json" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="Assets\logo.png" CopyToOutputDirectory="PreserveNewest" Condition="Exists('Assets\logo.png')" />
+    <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <None Update="favorites.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <Content Include="Assets\logo.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" Condition="Exists('Assets\logo.png')" />
     <Content Include="Assets\app.ico" CopyToOutputDirectory="PreserveNewest" Condition="Exists('Assets\app.ico')" />
   </ItemGroup>
 
