@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Celeris.Client/Celeris.Client.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Celeris.Client.Tests/Celeris.Client.Tests.csproj" />
+  </Folder>
+</Solution>

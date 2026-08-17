@@ -1,0 +1,9 @@
+using System.IO; using System.Text.Json;
+namespace Celeris.Client.Configuration;
+public static class ConfigurationLoader
+{
+    private static readonly JsonSerializerOptions Options = new() { PropertyNameCaseInsensitive = true, ReadCommentHandling = JsonCommentHandling.Skip };
+    public static ClientSettings Load(string directory) { var settings = Read<ClientSettings>(Path.Combine(directory, "appsettings.json")); if (!Uri.TryCreate(settings.BaseUrl, UriKind.Absolute, out var uri) || !IsSecureOrLocal(uri)) throw new InvalidDataException("BaseUrl deve usar HTTPS; HTTP é permitido apenas para localhost, 127.0.0.1 ou ::1 em desenvolvimento."); if (settings.AllowedOrigins.Count == 0) throw new InvalidDataException("AllowedOrigins deve conter ao menos uma origem."); foreach (var origin in settings.AllowedOrigins) if (!Uri.TryCreate(origin, UriKind.Absolute, out var allowed) || !IsSecureOrLocal(allowed)) throw new InvalidDataException($"Origem não permitida: {origin}"); var root = Path.GetFullPath(directory); var path = Path.GetFullPath(Path.Combine(root, settings.FavoritesFile)); if (!path.StartsWith(root, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("FavoritesFile deve permanecer na pasta da aplicação."); settings.Favorites = Read<Document>(path).Favorites.Where(x => x.Enabled && x.Name.Length > 0 && x.Url.Length > 0).ToArray(); return settings; }
+    public static bool IsSecureOrLocal(Uri uri) => uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp && (uri.IsLoopback || uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase));
+    private static T Read<T>(string path) => JsonSerializer.Deserialize<T>(File.ReadAllText(path), Options) ?? throw new InvalidDataException($"Configuração inválida: {Path.GetFileName(path)}"); private sealed class Document { public List<FavoriteItem> Favorites { get; set; } = []; }
+}

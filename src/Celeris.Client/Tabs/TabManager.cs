@@ -1,0 +1,3 @@
+using System.Collections.ObjectModel; using Celeris.Client.Models;
+namespace Celeris.Client.Tabs;
+public sealed class TabManager { public ObservableCollection<BrowserTab> Tabs { get; } = []; public BrowserTab CreateTab(BrowserSession session, Uri uri, bool allowExternalNavigation = false, int? insertIndex = null) { var tab = new BrowserTab(session, uri, allowExternalNavigation); if (insertIndex is { } index) Tabs.Insert(Math.Clamp(index, 0, Tabs.Count), tab); else Tabs.Add(tab); return tab; } public bool CloseTab(BrowserTab tab) => Tabs.Remove(tab); public IReadOnlyList<BrowserTab> GetTabsForSession(Guid id) => Tabs.Where(x => x.Session.Id == id).ToArray(); }

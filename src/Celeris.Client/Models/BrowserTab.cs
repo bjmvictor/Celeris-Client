@@ -1,0 +1,3 @@
+using System.ComponentModel; using System.Runtime.CompilerServices;
+namespace Celeris.Client.Models;
+public sealed class BrowserTab(BrowserSession session, Uri initialUri, bool allowExternalNavigation = false) : INotifyPropertyChanged { private string _title = "Celeris"; private Uri _url = initialUri; public Guid Id { get; } = Guid.NewGuid(); public BrowserSession Session { get; } = session; public bool AllowExternalNavigation { get; } = allowExternalNavigation; public string Title { get => _title; set { _title = value; Changed(); } } public Uri CurrentUrl { get => _url; set { _url = value; Changed(); } } public event PropertyChangedEventHandler? PropertyChanged; private void Changed([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name)); }

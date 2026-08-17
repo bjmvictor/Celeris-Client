@@ -1,0 +1,3 @@
+using Celeris.Client.Models;
+namespace Celeris.Client.Sessions;
+public sealed class SessionManager { private static readonly string[] Colors = ["#2563EB", "#16A34A", "#7C3AED", "#EA580C", "#0891B2", "#DB2777"]; private readonly List<BrowserSession> _sessions = []; public IReadOnlyList<BrowserSession> Sessions => _sessions; public BrowserSession CreateSession() { var n = _sessions.Count + 1; var s = new BrowserSession(Guid.NewGuid(), $"Sessão {n}", Colors[(n - 1) % Colors.Length], $"celeris-{Guid.NewGuid():N}", DateTimeOffset.UtcNow); _sessions.Add(s); return s; } public bool RemoveSession(Guid id) => _sessions.RemoveAll(x => x.Id == id) > 0; }

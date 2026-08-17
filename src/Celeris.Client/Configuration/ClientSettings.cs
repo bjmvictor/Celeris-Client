@@ -1,0 +1,4 @@
+namespace Celeris.Client.Configuration;
+public sealed class ClientSettings { public string BaseUrl { get; set; } = ""; public List<string> AllowedOrigins { get; set; } = []; public BrowserSettings Browser { get; set; } = new(); public string FavoritesFile { get; set; } = "favorites.json"; public IReadOnlyList<FavoriteItem> Favorites { get; internal set; } = []; }
+public sealed class BrowserSettings { public bool EnableDevTools { get; set; } public bool ShowUrlOption { get; set; } = true; }
+public sealed class FavoriteItem { public string Name { get; set; } = ""; public string Url { get; set; } = ""; public string IconPath { get; set; } = ""; public bool Enabled { get; set; } = true; public Uri Resolve(Uri baseUri) => Uri.TryCreate(Url, UriKind.Absolute, out var absolute) ? absolute : new Uri(baseUri, Url); }

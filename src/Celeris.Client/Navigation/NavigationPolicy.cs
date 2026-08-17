@@ -1,0 +1,2 @@
+namespace Celeris.Client.Navigation;
+public sealed class NavigationPolicy { private readonly HashSet<string> _origins; public NavigationPolicy(IEnumerable<string> origins) => _origins = origins.Select(x => Origin(new Uri(x))).ToHashSet(StringComparer.OrdinalIgnoreCase); public bool IsInternal(Uri uri) => Configuration.ConfigurationLoader.IsSecureOrLocal(uri) && _origins.Contains(Origin(uri)); private static string Origin(Uri uri) => uri.GetLeftPart(UriPartial.Authority).TrimEnd('/'); }
